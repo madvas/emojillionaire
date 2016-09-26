@@ -1,0 +1,9 @@
+/*.log
+/target
+/*-init.clj
+/resources/public/js/compiled
+out
+/emojillionaire.iml
+/.nrepl-port
+.idea
+env/prod/
