@@ -30,8 +30,6 @@
     (alter-var-root (var *server*)
                     (constantly (run-server http-handler {:port port :join? false})))))
 
-(-main)
-
 (defn stop-server []
   (*server*)
   (alter-var-root (var *server*) (constantly nil)))

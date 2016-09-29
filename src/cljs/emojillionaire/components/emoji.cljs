@@ -1,10 +1,11 @@
 (ns emojillionaire.components.emoji
   (:require
     [camel-snake-kebab.core :as cs :include-macros true]
-    [goog.string :as gstring]
-    [goog.string.format]
+    [cljs-react-material-ui.icons :as icons]
     [emojillionaire.emojis :refer [emojis]]
     [emojillionaire.styles :as st]
+    [goog.string :as gstring]
+    [goog.string.format]
     [reagent.core :as r]
     ))
 
@@ -37,9 +38,11 @@
   ([emoji-key size] (emoji {} emoji-key size 0))
   ([emoji-key size horizontal-padding] (emoji {} emoji-key size horizontal-padding))
   ([opts emoji-key size horizontal-padding]
-   [:img (r/merge-props
-           {:src (emoji-src emoji-key (or (:type opts) "svg"))
-            :style {:width size
-                    :padding-left horizontal-padding
-                    :padding-right horizontal-padding}}
-           opts)]))
+   (if (or (= emoji-key 0) (= emoji-key ""))
+     (icons/content-remove-circle-outline)
+     [:img (r/merge-props
+             {:src (emoji-src emoji-key (or (:type opts) "svg"))
+              :style {:width size
+                      :padding-left horizontal-padding
+                      :padding-right horizontal-padding}}
+             opts)])))

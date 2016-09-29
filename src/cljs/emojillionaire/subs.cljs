@@ -76,6 +76,16 @@
     (:selectable-emojis db)))
 
 (reg-sub
+  :db/has-web3?
+  (fn [db _]
+    (boolean (:web3 db))))
+
+(reg-sub
+  :db/selectable-emojis-indexed
+  (fn [db _]
+    (rest (medley/indexed (:selectable-emojis db)))))
+
+(reg-sub
   :db/selected-emoji
   (fn [db _]
     (get-in db [:emoji-select-form :selected-emoji])))
@@ -221,6 +231,12 @@
       (->> (vals bets)
         (filter #(= address (:address %)))
         (u/sort-by-desc :date))))
+
+(reg-sub
+  :player-profile/total-guesses
+  :<- [:player-profile/bets]
+  (fn [player-bets]
+    (reduce #(+ %1 (count (:guesses %2))) 0 player-bets)))
 
 (reg-sub
   :player-profile/sponsorships

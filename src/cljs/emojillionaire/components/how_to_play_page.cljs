@@ -22,5 +22,5 @@
     [:li
      [:div "Download Chrome extension " [u/new-window-link "https://metamask.io/" "MetaMask"] ".
      This is more lightweight solution, super easy to use! So first, you must add it to Chrome, create your new wallet
-      with it and fund it with some ETH. After this, emojillionaire should automatically see your wallet, then
+       and fund it with some ETH. After this, emojillionaire should automatically see your wallet, then
        just pick an emoji and click to pay!"]]]])

@@ -1,16 +1,17 @@
 (ns emojillionaire.events
   (:require
     [ajax.core :as ajax]
+    [camel-snake-kebab.core :as cs :include-macros true]
     [cljs.spec :as s]
     [day8.re-frame.http-fx]
-    [goog.string :as gstring]
-    [goog.string.format]
     [emojillionaire.components.emoji :refer [emoji]]
     [emojillionaire.components.layout :refer [row]]
     [emojillionaire.db :refer [default-db]]
     [emojillionaire.ga-fx]
     [emojillionaire.utils :as u]
     [emojillionaire.web3-fx]
+    [goog.string :as gstring]
+    [goog.string.format]
     [re-frame.core :refer [reg-event-db reg-event-fx path trim-v after debug reg-fx console dispatch]]
     [web3-cljs.core :as web3-cljs]
     [web3-cljs.eth :as web3-eth]
@@ -63,12 +64,13 @@
     {:db default-db
      :http-xhrio {:method :get
                   :uri (gstring/format "/contracts/build/%s.json"
-                                       (get-in default-db [:contract :name]))
+                                       (cs/->camelCase (get-in default-db [:contract :name])))
                   :timeout 15000
                   :response-format (ajax/json-response-format {:keywords? true})
                   :on-success [:contract/compiled-code-loaded]
                   :on-failure [:contract/compiled-code-load-error]}
-     :dispatch [:load-conversion-rate :usd]}))
+     :dispatch [:load-conversion-rate :usd]}
+    #_{:db default-db}))
 
 ;; ------------ Contract ------------
 
@@ -80,41 +82,47 @@
           abi (js/JSON.parse abi)
           {:keys [network web3]} db
           contract-instance (web3-eth/contract-at web3 abi (:address (:contract db)))]
-      {:db
-       (update db :contract merge {:abi abi :bin bin :instance contract-instance})
+      (merge
+        {:db
+         (cond-> db
+           true
+           (update :contract merge {:abi abi :bin bin :instance contract-instance})
 
-       :web3-fx.contract/events
-       {:db db
-        :instance contract-instance
-        :db-path [:contract :events]
-        :events [[:on-settings-change {} "latest" :contract/on-settings-change :contract/on-error]
-                 [:on-new-jackpot-started {} "latest" :contract/on-new-jackpot-started :contract/on-error]
-                 [:on-jackpot-amount-change {} "latest" :contract/on-jackpot-amount-change :contract/on-error]
-                 [:on-state-change {} "latest" :contract/on-state-change :contract/on-error]
-                 [:on-player-credit-change {} "latest" :contract/on-player-credit-change :contract/on-error]
-                 [:on-jackpot-won-latest :on-jackpot-won {} "latest" :contract/on-jackpot-won-latest :contract/on-error]
-                 [:on-new-player {} "latest" :contract/on-new-player :contract/on-error]
-                 [:on-bet {} "latest" :contract/on-bet :contract/on-error]
-                 [:on-top-sponsor-added {} "latest" :contract/on-top-sponsor-added :contract/on-error]
-                 [:on-top-sponsor-removed {} "latest" :contract/on-top-sponsor-removed :contract/on-error]
-                 [:on-sponsor-updated {} "latest" :contract/on-sponsor-updated :contract/on-error]
-                 [:on-oraclize-fee-change {} "latest" :contract/on-oraclize-fee-change :contract/on-error]]}
+           (not (:provides-web3? db))
+           (open-snackbar "Welcome! Looks like your browser can't handle Ethereum yet. Please see How to Play" :ghost))
 
-       :web3-fx.contract/constant-fns
-       {:instance contract-instance
-        :fns [[:get-settings :contract/get-settings :contract/on-error]
-              [:get-initial-load-data :contract/get-initial-load-data :contract/on-error]]}
+         :web3-fx.contract/events
+         {:db db
+          :instance contract-instance
+          :db-path [:contract :events]
+          :events [[:on-settings-change {} "latest" :contract/on-settings-change :contract/on-error]
+                   [:on-new-jackpot-started {} "latest" :contract/on-new-jackpot-started :contract/on-error]
+                   [:on-jackpot-amount-change {} "latest" :contract/on-jackpot-amount-change :contract/on-error]
+                   [:on-state-change {} "latest" :contract/on-state-change :contract/on-error]
+                   [:on-player-credit-change {} "latest" :contract/on-player-credit-change :contract/on-error]
+                   [:on-jackpot-won-latest :on-jackpot-won {} "latest" :contract/on-jackpot-won-latest :contract/on-error]
+                   [:on-new-player {} "latest" :contract/on-new-player :contract/on-error]
+                   [:on-bet {} "latest" :contract/on-bet :contract/on-error]
+                   [:on-top-sponsor-added {} "latest" :contract/on-top-sponsor-added :contract/on-error]
+                   [:on-top-sponsor-removed {} "latest" :contract/on-top-sponsor-removed :contract/on-error]
+                   [:on-sponsor-updated {} "latest" :contract/on-sponsor-updated :contract/on-error]
+                   [:on-oraclize-fee-change {} "latest" :contract/on-oraclize-fee-change :contract/on-error]]}
 
-       :web3-fx.blockchain/fns
-       {:web3 web3
-        :fns (concat
-               [[web3-eth/accounts :blockchain/my-addresses-loaded :blockchain/on-error]
-                [web3-eth/block-number :blockchain/block-number-loaded :blockchain/on-error]]
-               (when-let [dev-accounts (get-in db [:dev-accounts network])]
-                 (map (fn [[address password]]
-                        [web3-personal/unlock-account address password 604800
-                         [:blockchain/unlock-account-response address] [:blockchain/unlock-account-error address]])
-                      dev-accounts)))}})))
+         :web3-fx.contract/constant-fns
+         {:instance contract-instance
+          :fns [[:get-settings :contract/get-settings :contract/on-error]
+                [:get-initial-load-data :contract/get-initial-load-data :contract/on-error]]}}
+        (when (:provides-web3? db)
+          {:web3-fx.blockchain/fns
+           {:web3 web3
+            :fns (concat
+                   [[web3-eth/accounts :blockchain/my-addresses-loaded :blockchain/on-error]
+                    [web3-eth/block-number :blockchain/block-number-loaded :blockchain/on-error]]
+                   (when-let [dev-accounts (get-in db [:dev-accounts network])]
+                     (map (fn [[address password]]
+                            [web3-personal/unlock-account address password 604800
+                             [:blockchain/unlock-account-response address] [:blockchain/unlock-account-error address]])
+                          dev-accounts)))}})))))
 
 (reg-event-fx
   :contract/get-initial-load-data
@@ -251,7 +259,7 @@
     {:db (assoc-in db [:contract :code-loading?] true)
      :http-xhrio {:method :get
                   :uri (gstring/format "/contracts/src/%s.sol"
-                                       (get-in db [:contract :name]))
+                                       (cs/->camelCase (get-in default-db [:contract :name])))
                   :timeout 15000
                   :response-format (ajax/text-response-format)
                   :on-success [:contract/source-code-loaded]
@@ -339,6 +347,7 @@
           guesses (mapv #(.toNumber %) guesses)
           rolls (mapv #(.toNumber %) rolls)
           {:keys [new-bet]} db
+          rolls-ok? (every? #(< 0 %) rolls)
           on-rolled-new-bet? (and (:rolling? new-bet)
                                   (= player-address (:address new-bet))
                                   (= guesses (:guesses new-bet)))]
@@ -356,8 +365,13 @@
                                 :rolling? false
                                 :transaction-hash nil
                                 :bet-processed? false})
-        on-rolled-new-bet?
-        (open-snackbar "Winning emojis are ready!" :smiley-cat)))))
+
+        (and on-rolled-new-bet? rolls-ok?)
+        (open-snackbar "Winning emojis are ready!" :smiley-cat)
+
+        (and on-rolled-new-bet? (not rolls-ok?))
+        (open-snackbar "Hmm, winning emojis we got looks invalid. We refunded you for this bet, please try again!"
+                       :crying-cat-face)))))
 
 (reg-event-fx
   :contract/bet-response
@@ -377,9 +391,10 @@
            (cond-> db
              (not bet-processed?)
              (assoc-in [:new-bet :bet-processed?] true)
+
              (not bet-processed?)
              (open-snackbar "Bet transaction has been successfull, few more moments until we get winning emojis"
-                            :kissing-smiling-eyes)))
+                              :kissing-smiling-eyes)))
      :ga/event [:bet :contract/bet-transaction-receipt (:transaction-hash receipt)]}))
 
 ;; ------------ Contract Errors ------------
@@ -483,7 +498,7 @@
   (fn [_ [gas-limit on-success on-out-of-gas {:keys [gas-used] :as receipt}]]
     (let [gas-used-percent (* (/ gas-used gas-limit) 100)]
       (console :log (gstring/format "%.2f%" gas-used-percent) "gas used:" gas-used)
-      (if (= gas-limit gas-used)
+      (if (<= gas-limit gas-used)
         {:dispatch [on-out-of-gas receipt]}
         {:dispatch [on-success receipt]}))))
 
@@ -584,7 +599,7 @@
   interceptors
   (fn [{:keys [db]} [address amount name]]
     (let [{:keys [web3 contract]} db
-          gas-limit (get-in db [:gas-limits :bet])]
+          gas-limit (get-in db [:gas-limits :sponsor])]
       {:web3-fx.contract/state-fn
        {:instance (:instance contract)
         :web3 web3
@@ -665,7 +680,7 @@
 (reg-event-fx
   :contract/withdraw-error
   interceptors
-  (fn [db [error]]
+  (fn [{:keys [db]} [error]]
     (console :error error)
     {:db (-> db
            (update :withdraw merge {:transaction-hash nil :sending? false})

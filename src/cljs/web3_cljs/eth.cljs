@@ -1,7 +1,6 @@
 (ns web3-cljs.eth
   (:refer-clojure :exclude [filter])
-  (:require [cljs.core.async :as async]
-            [web3-cljs.utils :as u :refer [js-val js-apply]]))
+  (:require [web3-cljs.utils :as u :refer [js-val js-apply]]))
 
 (defn eth [web3]
   (aget web3 "eth"))
@@ -103,31 +102,11 @@
 (defn namereg [web3]
   (aget (eth web3) "namereg"))
 
-(defn watch
-  "Returns a dictionary of event channels."
-  [web3 filter-params]
-  (let [filt (.filter (eth web3) (js-val filter-params))
-        error-ch (async/chan 1)
-        result-ch (async/chan 1)]
-    (.watch filt (fn [error block-info]
-                   (when (some? error)
-                     (async/put! error-ch error))
-                   (when (some? block-info)
-                     (async/put! result-ch block-info))))
-    {:error  error-ch
-     :result result-ch
-     :filter filt}))
-
-(defn stop-watch
-  "Stops watching a channel dictionary."
-  [{:keys [error result filter]}]
-  (.stopWatching filter)
-  (async/close! result)
-  (async/close! error)
-  nil)
-
 (defn contract [web3 & args]
   (js-apply (eth web3) "contract" args))
 
-(defn contract-at [web3 abi address]
-  (.at (contract web3 abi) address))
+(defn contract-at [web3 abi & args]
+  (js-apply (contract web3 abi) "at" args))
+
+(defn stop-watching! [filter & args]
+  (js-apply filter "stopWatching" args))

@@ -2,8 +2,8 @@
   (:require
     [ajax.core :refer [GET]]
     [bidi.bidi :as bidi]
-    [cljs-time.coerce :refer [to-date-time to-long]]
-    [cljs-time.core :refer [date-time]]
+    [cljs-time.coerce :refer [to-date-time to-long to-local-date-time]]
+    [cljs-time.core :refer [date-time to-default-time-zone]]
     [cljs-time.format :as time-format]
     [goog.string :as gstring]
     [goog.string.format]
@@ -12,9 +12,6 @@
     [web3-cljs.eth :as we]
     [web3-cljs.utils :as wu]
     [medley.core :as medley]))
-
-#_(set! js/BigNumber.toString (fn [x]
-                                "abc"))
 
 (def path-for (partial bidi/path-for routes))
 
@@ -100,7 +97,7 @@
        :target :_blank} "Open in Etherscan"])
 
 (defn fetch-contract! [contracts-path contract-name on-success & [on-error]]
-  (GET (str contracts-path contract-name ".json?_=" (.getTime (new js/Date)))
+  (GET (str contracts-path ".json?_=" (.getTime (new js/Date)))
        {:response-format :json
         :keywords? true
         :handler (fn [res]
@@ -110,15 +107,18 @@
 
 (defn deploy-bin! [web3 abi bin from-addr gas on-send on-deploy & [on-error]]
   (let [Contract (we/contract web3 abi)]
-    (.new Contract #js {:from from-addr
-                        :data bin
-                        :gas gas}
-          (fn [error res]
-            (if (and error on-error)
-              (on-error error)
-              (if-let [address (and res (aget res "address"))]
-                (on-deploy (we/contract-at web3 abi address))
-                (on-send res)))))))
+    (web3-cljs.utils/js-apply
+      Contract
+      "new"
+      [{:from from-addr
+        :data bin
+        :gas gas}
+       (fn [error res]
+         (if (and error on-error)
+           (on-error error)
+           (if-let [address (and res (aget res "address"))]
+             (on-deploy (we/contract-at web3 abi address))
+             (on-send res))))])))
 
 (defn estimated-bet-cost [{:keys [guess-cost guess-fee oraclize-fee]} guess-count]
   (if (<= guess-count 0)
@@ -134,4 +134,4 @@
            (wb/to-big-number (wb/to-wei 0.005 :ether)))))
 
 (defn format-date [date]
-  (time-format/unparse-local (time-format/formatters :rfc822) (to-date-time date)))
+  (time-format/unparse-local (time-format/formatters :rfc822) (to-default-time-zone (to-date-time date))))

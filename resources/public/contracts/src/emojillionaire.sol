@@ -111,22 +111,35 @@ contract Emojillionaire is usingOraclize {
 
     function Emojillionaire() {
         oraclize_setNetwork(networkID_testnet);
-        oraclizeGasLimit = 700000;
-        totalPossibilities = 350;
         developer = msg.sender;
+        state = States.active;
+
+        totalPossibilities = 333;
         guessCost = 0.1 ether;
         guessFeeRatio = 100; // This means 1%
         guessFee = calculateGuessFee(guessFeeRatio, guessCost);
-        state = States.active;
-        maxGuessesAtOnce = 20;
-        sponsorNameMaxLength = 30;
-        sponsorshipFeeRatio = 500; // 5%
-        sponsorshipMinAmount = 1 ether;
-        totalJackpotAmountsWon = 0;
-        totalGuessesCount = 0;
-        totalSponsorshipsAmount = 0;
-        topSponsorsMaxLength = 10;
+
+//        oraclizeGasLimit = 700000;
+//        maxGuessesAtOnce = 20;
+//        sponsorNameMaxLength = 30;
+//        sponsorshipFeeRatio = 500; // 5%
+//        sponsorshipMinAmount = 1 ether;
+//        topSponsorsMaxLength = 10;
         startNewJackpot(0);
+    }
+
+    function calculateGuessFee(uint16 ratio, uint betVal) constant returns(uint) {
+        return betVal / 10000 * ratio;
+    }
+
+    function startNewJackpot(uint amount) private {
+        jackpots.push(Jackpot(amount, now));
+        onNewJackpotStarted(now, jackpots.length - 1);
+        onJackpotAmountChange(currentJackpotKey(), amount);
+    }
+
+    function currentJackpotKey() constant returns(uint) {
+        return jackpots.length - 1;
     }
 
     function changeDeveloper(address _developer)
@@ -149,35 +162,31 @@ contract Emojillionaire is usingOraclize {
 
     function refundEveryone()
         onlyDeveloper {
-
-        for (uint i = 0; i < playerKeys.length; i++) {
-            address playerAddress = playerKeys[i];
-            uint credit = players[playerAddress].credit;
-            if (credit > 0) {
-                if (!playerAddress.send(credit)) throw;
-                changeCredit(playerAddress, 0, false);
+            for (uint i = 0; i < playerKeys.length; i++) {
+                address playerAddress = playerKeys[i];
+                uint credit = players[playerAddress].credit;
+                if (credit > 0) {
+                    if (!playerAddress.send(credit)) throw;
+                    changeCredit(playerAddress, 0, false);
+                }
             }
-        }
 
-        for (i = 0; i < bets.length; i++) {
-            Bet bet = bets[i];
-            if (!bet.playerAddress.send(bet.guessesCost)) throw;
-        }
-
-        for (i = 0; i < sponsorships.length; i++) {
-            Sponsorship sponsorship = sponsorships[i];
-            uint jackpotKey = currentJackpotKey();
-            if (sponsorship.jackpotKey == jackpotKey) {
-                if (!sponsorship.sponsorAddress.send(sponsorship.amount)) throw;
+            for (i = 0; i < bets.length; i++) {
+                Bet bet = bets[i];
+                if (!bet.playerAddress.send(bet.guessesCost)) throw;
             }
-        }
 
-        setJackpotAmount(0);
+            for (i = 0; i < sponsorships.length; i++) {
+                Sponsorship sponsorship = sponsorships[i];
+                uint jackpotKey = currentJackpotKey();
+                if (sponsorship.jackpotKey == jackpotKey) {
+                    if (!sponsorship.sponsorAddress.send(sponsorship.amount)) throw;
+                }
+            }
+
+            setJackpotAmount(0);
     }
 
-    function calculateGuessFee(uint16 ratio, uint betVal) constant returns(uint) {
-        return betVal / 10000 * ratio;
-    }
 
     function sortTopSponsors() {
         uint n = topSponsorsAddresses.length;
@@ -216,9 +225,9 @@ contract Emojillionaire is usingOraclize {
     }
 
     function setTopSponsorsMaxLength(uint16 _topSponsorsMaxLength)
-    onlyDeveloper {
-        if (_topSponsorsMaxLength < 0) throw;
-        topSponsorsMaxLength = _topSponsorsMaxLength;
+        onlyDeveloper {
+            if (_topSponsorsMaxLength < 0) throw;
+            topSponsorsMaxLength = _topSponsorsMaxLength;
     }
 
     function setOraclizeGasLimit(uint _oraclizeGasLimit)
@@ -245,60 +254,27 @@ contract Emojillionaire is usingOraclize {
         return uint(uint256(block.blockhash(block.number - 1)) % totalPossibilities);
     }
 
-    function validateGuesses(uint16[] guesses) constant returns(bool) {
+    function validGuesses(uint16[] guesses) constant returns(bool) {
+        bool valid = true;
         for (uint i = 0; i < guesses.length; i++) {
             if (!isValidBetInput(guesses[i])) {
-                throw;
+                valid = false;
+                break;
             }
         }
+        return valid;
     }
 
     function isValidBetInput(uint16 betInput) constant returns(bool) {
-        return betInput >= 0 && betInput < totalPossibilities;
-    }
-
-    function bytes32ToString (bytes32 x) constant returns (string) {
-        bytes memory bytesString = new bytes(32);
-        uint charCount = 0;
-        for (uint j = 0; j < 32; j++) {
-            byte char = byte(bytes32(uint(x) * 2 ** (8 * j)));
-            if (char != 0) {
-                bytesString[charCount] = char;
-                charCount++;
-            }
-        }
-        bytes memory resultBytes = new bytes(charCount);
-        for (j = 0; j < charCount; j++) {
-            resultBytes[j] = bytesString[j];
-        }
-
-        return string(resultBytes);
-    }
-
-    function uintToBytes(uint v) constant private returns (bytes32 ret) {
-        if (v == 0) {
-            ret = '0';
-        }
-        else {
-            while (v > 0) {
-                ret = bytes32(uint(ret) / (2 ** 8));
-                ret |= bytes32(((v % 10) + 48) * 2 ** (8 * 31));
-                v /= 10;
-            }
-        }
-        return ret;
-    }
-
-    function uintToString(uint v) constant returns (string ret) {
-        return bytes32ToString(uintToBytes(v));
+        return betInput > 0 && betInput <= totalPossibilities;
     }
 
     function getRandomOrgQuery(uint guessesLength) constant returns(string) {
             var parts = new strings.slice[](4);
             parts[0] = "https://www.random.org/integers/?num=".toSlice();
-            parts[1] = uintToString(guessesLength).toSlice();
-            parts[2] = "&min=0&col=1&base=10&format=plain&rnd=new&max=".toSlice();
-            parts[3] = uintToString(totalPossibilities - 1).toSlice();
+            parts[1] = strings.uintToString(guessesLength).toSlice();
+            parts[2] = "&min=1&col=1&base=10&format=plain&rnd=new&max=".toSlice();
+            parts[3] = strings.uintToString(totalPossibilities).toSlice();
             return "".toSlice().join(parts);
     }
 
@@ -311,12 +287,12 @@ contract Emojillionaire is usingOraclize {
 
     function callOraclizeQuery(uint guessesLength) returns(bytes32) {
         if (privateNet) {
-            return uintToBytes(getRandomNumber());
+            return strings.uintToBytes(getRandomNumber());
         }
         return oraclize_query("URL", getRandomOrgQuery(guessesLength), oraclizeGasLimit);
     }
 
-    function getNumbersFromString(string s, string delimiter, uint16 howmany) constant returns(uint16[] numbers){
+    function getNumbersFromString(string s, string delimiter, uint16 howmany) constant returns(uint16[] numbers) {
          strings.slice memory myresult = s.toSlice();
          strings.slice memory delim = delimiter.toSlice();
          numbers = new uint16[](howmany);
@@ -326,80 +302,84 @@ contract Emojillionaire is usingOraclize {
          return numbers;
      }
 
-    function bet(uint16[] guesses)
-    onlyActive
-    payable
-    {
-        if (guesses.length < 1 || guesses.length > maxGuessesAtOnce) {
-            throw;
-        }
+    function bet(uint16[] guesses) 
+        onlyActive
+        payable {
+            if (guesses.length < 1 || guesses.length > maxGuessesAtOnce) {
+                throw;
+            }
 
-        validateGuesses(guesses);
+            if (!validGuesses(guesses)) throw;
 
-        uint guessesCost = guessCost * guesses.length;
-        uint betFee = guessFee * guesses.length;
-        uint oraclizeFee = getOraclizeFee();
-        uint totalCost = oraclizeFee + guessesCost + betFee;
-        uint totalPlayerCredit = msg.value + players[msg.sender].credit;
+            uint guessesCost = guessCost * guesses.length;
+            uint betFee = guessFee * guesses.length;
+            uint oraclizeFee = getOraclizeFee();
+            uint totalCost = oraclizeFee + guessesCost + betFee;
+            uint totalPlayerCredit = msg.value + players[msg.sender].credit;
 
-        if (totalPlayerCredit < totalCost) {
-            throw;
-        }
+            if (totalPlayerCredit < totalCost) {
+                throw;
+            }
 
-        if (msg.value - totalCost > 0) {
-            changeCredit(msg.sender, msg.value - totalCost, true);
-        }
+            if (!players[msg.sender].exists) {
+                playerKeys.push(msg.sender);
+                players[msg.sender].exists = true;
+                onNewPlayer(msg.sender, now, playersCount());
+            }
 
-        setJackpotAmount(currentJackpotAmount() + guessesCost);
+            if (msg.value - totalCost > 0) {
+                changeCredit(msg.sender, msg.value - totalCost, true);
+            }
 
-        bytes32 queryId = callOraclizeQuery(guesses.length);
+            setJackpotAmount(currentJackpotAmount() + guessesCost);
 
-        bets.push(Bet(msg.sender, guesses, new uint16[](0), guessesCost, betFee, oraclizeFee, currentJackpotKey(),
-                      queryId, now));
+            bytes32 queryId = callOraclizeQuery(guesses.length);
 
-        totalGuessesCount += guesses.length;
-        onBet(betsCount(), totalGuessesCount);
+            bets.push(Bet(msg.sender, guesses, new uint16[](0), guessesCost, betFee, oraclizeFee, currentJackpotKey(),
+                          queryId, now));
 
-        if (privateNet) {
-            __callback(queryId, "200\n147\n138\n139\n335\n210\n333\n25\n305\n187\n272\n136\n48\n312\n34\n130\n101\n319\n266\n75");
-        }
+            totalGuessesCount += guesses.length;
+            onBet(betsCount(), totalGuessesCount);
+
+            if (privateNet) {
+                __callback(queryId, "200\n147\n138\n139\n102\n210\n333\n25\n305\n187\n272\n136\n48\n312\n34\n130\n101\n319\n266\n0");
+            }
     }
 
-    function sponsor(string name)
-    onlyActive
-    payable
-    {
-        if (msg.value < sponsorshipMinAmount) throw;
-        if (name.toSlice().len() > sponsorNameMaxLength) throw;
-        uint fee = msg.value / (10000 / sponsorshipFeeRatio);
-        uint amount = msg.value - fee;
+    function sponsor(string name) 
+        onlyActive
+        payable {
+            if (msg.value < sponsorshipMinAmount) throw;
+            if (name.toSlice().len() > sponsorNameMaxLength) throw;
+            uint fee = msg.value / (10000 / sponsorshipFeeRatio);
+            uint amount = msg.value - fee;
 
-        if (!sponsors[msg.sender].exists) {
-            sponsorKeys.push(msg.sender);
-        }
+            if (!sponsors[msg.sender].exists) {
+                sponsorKeys.push(msg.sender);
+            }
 
-        sponsorships.push(Sponsorship(msg.sender, name, amount, fee, now, currentJackpotKey()));
-        sponsors[msg.sender].exists = true;
-        sponsors[msg.sender].amount += amount;
-        sponsors[msg.sender].name = name;
-        totalSponsorshipsAmount += amount;
-        setJackpotAmount(currentJackpotAmount() + amount);
+            sponsorships.push(Sponsorship(msg.sender, name, amount, fee, now, currentJackpotKey()));
+            sponsors[msg.sender].exists = true;
+            sponsors[msg.sender].amount += amount;
+            sponsors[msg.sender].name = name;
+            totalSponsorshipsAmount += amount;
+            setJackpotAmount(currentJackpotAmount() + amount);
 
-        if (!hasAddress(topSponsorsAddresses, msg.sender) && lastTopSponsorAmount() < sponsors[msg.sender].amount) {
-            topSponsorsAddresses.push(msg.sender);
-            onTopSponsorAdded(msg.sender, name, sponsors[msg.sender].amount, now);
-        }
+            if (!hasAddress(topSponsorsAddresses, msg.sender) && lastTopSponsorAmount() < sponsors[msg.sender].amount) {
+                topSponsorsAddresses.push(msg.sender);
+                onTopSponsorAdded(msg.sender, name, sponsors[msg.sender].amount, now);
+            }
 
-        sortTopSponsors();
+            sortTopSponsors();
 
-        if (topSponsorsAddresses.length > topSponsorsMaxLength) {
-            onTopSponsorRemoved(topSponsorsAddresses[topSponsorsAddresses.length - 1]);
-            delete topSponsorsAddresses[topSponsorsAddresses.length - 1];
-        }
+            if (topSponsorsAddresses.length > topSponsorsMaxLength) {
+                onTopSponsorRemoved(topSponsorsAddresses[topSponsorsAddresses.length - 1]);
+                delete topSponsorsAddresses[topSponsorsAddresses.length - 1];
+            }
 
-        onSponsorUpdated(msg.sender, name, sponsors[msg.sender].amount, now);
-        onSponsorshipAdded(currentJackpotKey(), msg.sender, name, amount, fee, now, sponsorsCount(),
-                           sponsorshipsCount(), totalSponsorshipsAmount);
+            onSponsorUpdated(msg.sender, name, sponsors[msg.sender].amount, now);
+            onSponsorshipAdded(currentJackpotKey(), msg.sender, name, amount, fee, now, sponsorsCount(),
+                               sponsorshipsCount(), totalSponsorshipsAmount);
     }
 
     function jackpotsCount() constant returns(uint) {
@@ -412,10 +392,6 @@ contract Emojillionaire is usingOraclize {
 
     function playersCount() constant returns(uint) {
         return playerKeys.length;
-    }
-
-    function currentJackpotKey() constant returns(uint) {
-        return jackpots.length - 1;
     }
 
     function currentJackpotAmount() constant returns(uint) {
@@ -458,12 +434,6 @@ contract Emojillionaire is usingOraclize {
     }
 
     function changeCredit(address playerAddress, uint amount, bool add) private {
-        if (!players[playerAddress].exists) {
-            playerKeys.push(playerAddress);
-            onNewPlayer(playerAddress, now, playersCount());
-        }
-
-        players[playerAddress].exists = true;
         if (add) {
             players[playerAddress].credit += amount;
         } else {
@@ -493,11 +463,6 @@ contract Emojillionaire is usingOraclize {
         }
     }
 
-    function startNewJackpot(uint amount) private {
-        jackpots.push(Jackpot(amount, now));
-        onNewJackpotStarted(now, jackpots.length - 1);
-        onJackpotAmountChange(currentJackpotKey(), amount);
-    }
 
     function getBetKeyByQueryId(bytes32 queryId) returns(bool, uint) {
         uint foundKey;
@@ -513,43 +478,48 @@ contract Emojillionaire is usingOraclize {
     }
 
     function __callback(bytes32 queryId, string result)
-    onlyActive {
-        if (!privateNet && msg.sender != oraclize_cbAddress())
-            throw;
+        onlyActive {
+            if (!privateNet && msg.sender != oraclize_cbAddress())
+                throw;
 
-        uint betKey;
-        bool betKeyFound;
-        (betKeyFound, betKey) = getBetKeyByQueryId(queryId);
+            uint betKey;
+            bool betKeyFound;
+            (betKeyFound, betKey) = getBetKeyByQueryId(queryId);
 
-        if (!betKeyFound) {
-            throw;
-        }
+            if (!betKeyFound) {
+                throw;
+            }
 
-        Bet thisBet = bets[betKey];
+            Bet thisBet = bets[betKey];
 
-        if (thisBet.rolls.length > 0) throw; // Callback already called
+            if (thisBet.rolls.length > 0) throw; // Callback already called
 
-        var rolls = getNumbersFromString(result,"\n", uint16(thisBet.guesses.length));
-        validateGuesses(rolls);
+            var rolls = getNumbersFromString(result,"\n", uint16(thisBet.guesses.length));
+            validGuesses(rolls);
 
-        thisBet.rolls = rolls;
+            thisBet.rolls = rolls;
+            onRolled(thisBet.playerAddress, thisBet.guesses, rolls, now, betKey);
 
-        onRolled(thisBet.playerAddress, thisBet.guesses, rolls, now, betKey);
-        checkWinning(thisBet);
+            if (validGuesses(rolls)) {
+                checkWinning(thisBet);
+            } else { // We got invalid response from random.org, so we refund player
+                changeCredit(thisBet.playerAddress, thisBet.betFee + thisBet.guessesCost, true);
+                setJackpotAmount(currentJackpotAmount() - thisBet.guessesCost);
+            }
     }
 
     function withdraw()
-    onlyActive {
-        uint credit = players[msg.sender].credit;
-        if (credit > 0) {
-            changeCredit(msg.sender, 0, false);
-            if (!msg.sender.send(credit)) throw;
-        }
+        onlyActive {
+            uint credit = players[msg.sender].credit;
+            if (credit > 0) {
+                changeCredit(msg.sender, 0, false);
+                if (!msg.sender.send(credit)) throw;
+            }
     }
 
     function developerWithdrawProfit()
         onlyDeveloper {
-        if (!developer.send(this.balance - currentJackpotAmount())) throw;
+            if (!developer.send(this.balance - currentJackpotAmount())) throw;
     }
 
     function() {

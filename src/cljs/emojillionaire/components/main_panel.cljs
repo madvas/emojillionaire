@@ -48,7 +48,8 @@
         current-page (subscribe [:db/current-page])
         my-addresses (subscribe [:db/my-addresses])
         active-state? (subscribe [:contract/active-state?])
-        snackbar (subscribe [:db/snackbar])]
+        snackbar (subscribe [:db/snackbar])
+        network (subscribe [:db/network])]
     (fn []
       {:fluid true}
       [ui/mui-theme-provider
@@ -63,6 +64,10 @@
                      :on-left-icon-button-touch-tap #(dispatch [:drawer/toggle])
                      :icon-element-right (r/as-element
                                            [row {:middle "xs"}
+                                            [:h2 {:style st/network-title} (case @network
+                                                                             :testnet "Morden Testnet"
+                                                                             :privnet "Private Net"
+                                                                             "")]
                                             [u/new-window-link "https://www.ethereum.org/"
                                              [:img {:src "/images/ethereum.svg"
                                                     :style st/eth-logo}]]])}]

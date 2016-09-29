@@ -1,6 +1,7 @@
 (ns emojillionaire.emojis)
 (def emojis
-  [":100:"
+  [""
+   ":100:"
    ":alien:"
    ":angel:"
    ":angry:"

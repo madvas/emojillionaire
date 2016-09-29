@@ -9,7 +9,7 @@
     ))
 
 (def col (r/adapt-react-class js/ReactFlexboxGrid.Col))
-(def row (r/adapt-react-class js/ReactFlexboxGrid.Row))
+(def row (r/adapt-react-class (aget js/ReactFlexboxGrid "Row")))
 (def grid (r/adapt-react-class js/ReactFlexboxGrid.Grid))
 
 (def outer-layout-flex {:xs 12 :sm 12 :md 12 :lg 10 :lg-offset 1})

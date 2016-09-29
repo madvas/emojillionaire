@@ -42,8 +42,8 @@
 (def text-left {:text-align :left})
 (def grey-text {:color "#9e9e9e"})
 
-(def new-bet-summary (merge text-right
-                            {:line-height "1.4em"}))
+(def table-summary (merge text-right
+                          {:line-height "1.4em"}))
 
 (def bet-btns-wrap (merge text-right {:margin-top 30}))
 
@@ -77,3 +77,6 @@
 (def eth-logo {:margin-top -1
                :margin-right 10
                :height 50})
+
+(def network-title {:color "#FFF"
+                    :margin-top "-8px"})

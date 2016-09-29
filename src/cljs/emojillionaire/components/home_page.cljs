@@ -36,12 +36,12 @@
             :on-touch-tap #(dispatch [:new-bet/add-guess index])}]]]))))
 
 (defn- emoji-select-form []
-  (let [selectable-emojis (subscribe [:db/selectable-emojis])]
+  (let [selectable-emojis (subscribe [:db/selectable-emojis-indexed])]
     (fn []
       [row {:bottom "xs"}
        [col {:xs 12 :sm 12 :md 8 :lg 8
              :style st/emoji-select-form-wrap}
-        (for [[index emoji-key] (medley/indexed @selectable-emojis)]
+        (for [[index emoji-key] @selectable-emojis]
           [emoji
            {:key emoji-key
             :class "selectable-emoji"
@@ -67,7 +67,7 @@
     {:get-initial-state
      (fn [this]
        (let [emojis-count (count (second (reagent.core/argv this)))]
-         {:interval (js/setInterval #(r/set-state this {:emoji-index (rand-int emojis-count)}) 250)
+         {:interval (js/setInterval #(r/set-state this {:emoji-index (inc (rand-int (dec emojis-count)))}) 250)
           :emoji-index (rand-int emojis-count)}))
      :component-will-unmount
      (fn [this]
@@ -129,7 +129,7 @@
           [ui/table-footer
            [ui/table-row
             [ui/table-row-column
-             {:col-span 4 :style st/new-bet-summary}
+             {:col-span 4 :style st/table-summary}
              "Estimated price: " [:b (u/eth @estimated-bet-cost)] [:br]
              "Price includes bet cost, bet fee and oracle fee. Change will be returned to you as credit"]]]]]))))
 
@@ -162,7 +162,7 @@
                :label-position :before
                :label "How do I connect ETH wallet?"
                :style (merge st/full-width {:margin-bottom 10})
-               :href "#"
+               :href (u/path-for :how-to-play)
                :icon (icons/action-help-outline)}]
              [:br]])
           [ui/raised-button
@@ -303,7 +303,7 @@
         [ui/table-footer
          [ui/table-row
           [ui/table-row-column
-           {:col-span 5 :style st/new-bet-summary}
+           {:col-span 5 :style st/table-summary}
            [:h2 "Total: " (u/eth @sponsorships-total-amount)]]]]]])))
 
 (defn- stats-component []

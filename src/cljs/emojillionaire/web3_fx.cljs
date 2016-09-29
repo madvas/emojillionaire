@@ -82,7 +82,7 @@
 
 (defn- event-stop-watching! [db db-path event-id]
   (when-let [event-filter (get-in db (conj db-path event-id))]
-    (.stopWatching event-filter (fn []))))
+    (web3-eth/stop-watching! event-filter (fn [] ))))
 
 (reg-fx
   :web3-fx.contract/events
@@ -133,7 +133,7 @@
 
 (defn- remove-blockchain-filter! [db filter-db-path]
   (when-let [blockchain-filter (get-in db filter-db-path)]
-    (.stopWatching blockchain-filter (fn [])))
+    (web3-eth/stop-watching! blockchain-filter (fn [] )))
   (assoc-in db filter-db-path nil))
 
 (reg-event-db
@@ -219,7 +219,7 @@
                                      addresses))]
 
       (when-let [blockchain-filter (get-in db filter-db-path)]
-        (.stopWatching blockchain-filter (fn [])))
+        (web3-eth/stop-watching! blockchain-filter (fn [] )))
 
       (let [blockchain-filter
             (web3-eth/filter

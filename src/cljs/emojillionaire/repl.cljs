@@ -10,7 +10,11 @@
   (print.foo/look (:instance (:contract @re-frame.db/app-db)))
 
   (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :state)
-  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :bets)
+  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :player-keys)
+  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :players "0x7c7c3e38779e2407ad4daf1fe339635cccf34e87")
+  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :players-count)
+  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :jackpots)
+  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :get-bet 1 #(println %2))
   (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :bets-count)
   (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :get-bet)
   (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :sponsors 0 #(println %2))
@@ -69,15 +73,78 @@
                                                    :gas 4712388}
                                  #(print.foo/look %&))
 
+  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db))
+                                 :change-settings
+                                 (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :guess-cost)
+                                 (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :total-possibilities)
+                                 (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :guess-fee-ratio)
+                                 25                         ; max-guesses-at-once
+                                 30                         ; sponsor-name-max-length
+                                 500                        ; sponsorship-fee-ratio
+                                 (web3-cljs.core/to-wei 1 :ether) ; sponsorship-min-amount
+                                 {:from (first (:my-addresses @re-frame.db/app-db))
+                                  :gas 4712388}
+                                 #(print.foo/look %&))
 
-  (let [{:keys [my-addresses contract web3]} @re-frame.db/app-db]
-    (emojillionaire.utils/deploy-bin! web3 (:abi contract) (:bin contract) (first my-addresses) 4012388
-                                   (fn [res]
-                                     (print.foo/look res))
-                                   (fn [Contract]
-                                     (println "Contract address: " (aget Contract "address")))
-                                   (fn [err]
-                                     (.error js/console err))))
+  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db))
+                                 :bet
+                                 (range 1 21)
+                                 {:from (second (:my-addresses @re-frame.db/app-db))
+                                  :gas 4712388
+                                  :value (emojillionaire.utils/calculate-bet-cost
+                                           (:instance (:contract @re-frame.db/app-db))
+                                           20)}
+                                 #(print.foo/look %&))
+
+  (web3-cljs.eth/get-transaction-receipt (:web3 @re-frame.db/app-db) "0xf7887c3599b7aac7f20598f0a6915e6959ee29edf107ef486e76e2c8aad71402" #(print.foo/look %&))
+  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :max-guesses-at-once)
+  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :top-sponsors-max-length)
+  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db))
+                                 :set-top-sponsors-max-length
+                                 10
+                                 {:from (first (:my-addresses @re-frame.db/app-db))
+                                  :gas 4712388}
+                                 #(print.foo/look %&))
+
+  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :oraclize-gas-limit)
+  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db))
+                                 :set-oraclize-gas-limit
+                                 700000
+                                 {:from (first (:my-addresses @re-frame.db/app-db))
+                                  :gas 4712388}
+                                 #(print.foo/look %&))
+
+  (emojillionaire.utils/fetch-contract! "/contracts/build/emojillionaire"
+                                        "Emojillionaire"
+                                        (fn [abi bin]
+                                          (println (web3-cljs.eth/estimate-gas (:web3 @re-frame.db/app-db)
+                                                                               {:data bin}))))
+
+  (emojillionaire.utils/fetch-contract! "/contracts/build/emojillionaire"
+                                        "EmojillionaireUtils"
+                                        (fn [abi bin]
+                                          (println (web3-cljs.eth/estimate-gas (:web3 @re-frame.db/app-db)
+                                                                               {:data bin}))))
+
+  (emojillionaire.utils/fetch-contract! "/contracts/build/emojillionaire"
+                                        "EmojillionaireDb"
+                                        (fn [abi bin]
+                                          (println (web3-cljs.eth/estimate-gas (:web3 @re-frame.db/app-db)
+                                                                               {:data bin}))))
+
+
+  (let [{:keys [my-addresses web3]} @re-frame.db/app-db]
+    (emojillionaire.utils/fetch-contract!
+      "/contracts/build/emojillionaire"
+      :Emojillionaire
+      (fn [abi bin]
+        (emojillionaire.utils/deploy-bin! web3 abi bin (first my-addresses) 4700000
+                                          (fn [res]
+                                            (print.foo/look res))
+                                          (fn [Contract]
+                                            (println "Contract address: " (aget Contract "address")))
+                                          (fn [err]
+                                            (.error js/console err))))))
 
   (:sponsors @re-frame.db/app-db)
 
@@ -295,7 +362,7 @@
 
   (def Emojillionaire (we/contract-at w3 contract-abi contract-address))
   (.onSomeMethod Emojillionaire (fn [err res]
-                              (println "onSomeMethod!!")))
+                                  (println "onSomeMethod!!")))
   (.someMethod Emojillionaire #js {"value" 10 "gas" 2000})
 
 

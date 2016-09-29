@@ -1,15 +1,15 @@
 (defproject emojillionaire "0.1.0-SNAPSHOT"
   :dependencies [[bidi "2.0.10"]
+                 ;[cljsjs/web3 "0.17.0-beta-0"]
                  [bk/ring-gzip "0.1.1"]
                  [camel-snake-kebab "0.4.0"]
                  [cljs-ajax "0.5.8"]
                  [cljs-react-material-ui "0.2.22"]
                  [cljsjs/bignumber "2.1.4-1"]
                  [cljsjs/emojione "2.2.6-1"]
-                 [cljsjs/react-flexbox-grid "0.10.2-0"]
-                 [cljsjs/react-highlight "1.0.5-0"]
-                 ;[cljsjs/web3 "0.16.0-0"]
-                 [cljsjs/web3 "0.17.0-beta-0"]
+                 [cljsjs/react-flexbox-grid "0.10.2-0" :exclusions [cljsjs/react]]
+                 [cljsjs/react-highlight "1.0.5-0" :exclusions [cljsjs/react]]
+                 [cljsjs/web3 "0.16.0-0"]
                  [com.andrewmcveigh/cljs-time "0.4.0"]
                  [compojure "1.6.0-beta1"]
                  [day8.re-frame/http-fx "0.0.4"]
@@ -19,6 +19,7 @@
                  [medley "0.8.3"]
                  [org.clojure/clojure "1.9.0-alpha10"]
                  [org.clojure/clojurescript "1.9.227"]
+                 [print-foo-cljs "2.0.3"]
                  [re-frame "0.8.0"]
                  [reagent "0.6.0-rc" :exclusions [cljsjs/react]]
                  [ring.middleware.logger "0.5.0"]
@@ -56,6 +57,7 @@
          :source-map true
          :compression true}
 
+  :uberjar-name "emojillionaire.jar"
   :main emojillionaire.core
 
   :profiles
@@ -63,8 +65,7 @@
    {:dependencies [[binaryage/devtools "0.8.1"]
                    [com.cemerick/piggieback "0.2.1"]
                    [figwheel-sidecar "0.5.6"]
-                   [org.clojure/tools.nrepl "0.2.11"]
-                   [print-foo-cljs "2.0.3"]]
+                   [org.clojure/tools.nrepl "0.2.11"]]
     :plugins [[lein-figwheel "0.5.6"]]
     :source-paths ["env/dev"]
     :cljsbuild {:builds [{:id "dev"
@@ -75,13 +76,19 @@
                                      :output-dir "resources/public/js/compiled/out"
                                      :asset-path "/js/compiled/out"
                                      :source-map-timestamp true
+                                     :optimizations :none
                                      :closure-defines {goog.DEBUG true}
-                                     :preloads [print.foo.preloads.devtools]}}
+                                     :preloads [print.foo.preloads.devtools]}}]}}
 
-                         {:id "min"
-                          :source-paths ["src/cljs"]
-                          :compiler {:main emojillionaire.core
-                                     :output-to "resources/public/js/compiled/app.js"
-                                     :optimizations :advanced
-                                     :closure-defines {goog.DEBUG false}
-                                     :pretty-print false}}]}}})
+   :uberjar {:hooks [leiningen.cljsbuild]
+             :omit-source true
+             :aot :all
+             :main emojillionaire.core
+             :cljsbuild {:builds {:app {:id "uberjar"
+                                        :source-paths ["src/cljs"]
+                                        :compiler {:main emojillionaire.core
+                                                   :output-to "resources/public/js/compiled/app.js"
+                                                   :optimizations :advanced
+                                                   :closure-defines {goog.DEBUG false}
+                                                   :pretty-print true
+                                                   :pseudo-names true}}}}}})

@@ -35,7 +35,7 @@
     (fn [my-profile-page?]
       [outer-paper
        [headline "Sponsorings" :military-medal]
-       [ui/table {:selectable false :height "500px"}
+       [ui/table {:selectable false}
         [ui/table-header {:adjust-for-checkbox false :display-select-all false}
          [ui/table-row
           [ui/table-header-column "Name"]
@@ -55,15 +55,16 @@
              (if my-profile-page?
                [text-with-emoji "You haven't sponsored yet. Nevermind, we still love you!" :revolving-hearts]
                [text-with-emoji "This player haven't sponsored any amount. One day maybe..." :sun-with-face])]])]
-        (when (< 1 (count @sponsorships))
+        (when (seq @sponsorships)
           [ui/table-footer
            [ui/table-row
             [ui/table-row-column
-             {:col-span 3 :style st/new-bet-summary}
+             {:col-span 3 :style st/table-summary}
              [:h2 "Total: " (u/eth @sponsorships-total-amount)]]]])]])))
 
 (defn- previous-bets []
-  (let [bets (subscribe [:player-profile/bets])]
+  (let [bets (subscribe [:player-profile/bets])
+        total-guesses (subscribe [:player-profile/total-guesses])]
     (fn [my-profile-page?]
       [outer-paper
        [headline "Bets" :four-leaf-clover]
@@ -92,7 +93,13 @@
                [text-with-emoji
                 "You haven't place any bet yet. Luck is for those who try!" :thinking]
                [text-with-emoji
-                "This player haven't placed any bet yet." :confused])]])]]])))
+                "This player haven't placed any bet yet." :confused])]])]
+        (when (< 0 @total-guesses)
+          [ui/table-footer
+           [ui/table-row
+            [ui/table-row-column
+             {:col-span 3 :style st/table-summary}
+             [:h2 "Total guesses: " @total-guesses]]]])]])))
 
 (defn- account-info []
   (let [account (subscribe [:player-profile/account])
