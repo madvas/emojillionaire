@@ -155,7 +155,7 @@
                     {:from-block 0}
                     :contract/on-sponsorship-added
                     :contract/on-error]]}}
-        (when-not (empty? top-sponsors-addresses)
+        (when (seq top-sponsors-addresses)
           {:web3-fx.contract/constant-fns
            {:instance (get-in db [:contract :instance])
             :fns (map #(vec [:sponsors % [:contract/sponsor-loaded %] :contract/on-error]) top-sponsors-addresses)}})))))
@@ -268,7 +268,7 @@
 (reg-event-db
   :contract/sponsor-loaded
   interceptors
-  (fn [db [[sponsor-address name amount]]]
+  (fn [db [sponsor-address [name amount]]]
     (assoc-in db [:sponsors sponsor-address] {:address sponsor-address
                                               :name name
                                               :amount amount})))

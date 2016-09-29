@@ -98,7 +98,8 @@
 
   (web3-cljs.eth/get-transaction-receipt (:web3 @re-frame.db/app-db) "0xf7887c3599b7aac7f20598f0a6915e6959ee29edf107ef486e76e2c8aad71402" #(print.foo/look %&))
   (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :max-guesses-at-once)
-  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :top-sponsors-max-length)
+  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :top-sponsors-max-length #(print.foo/look (.toNumber %2)))
+  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :top-sponsors-addresses 1 #(print.foo/look %2))
   (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db))
                                  :set-top-sponsors-max-length
                                  10
