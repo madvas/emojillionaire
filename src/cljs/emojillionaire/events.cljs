@@ -209,7 +209,7 @@
   :contract/on-sponsor-updated
   interceptors
   (fn [_ [{:keys [sponsor-address name amount]}]]
-    {:dispatch [:contract/sponsor-loaded [sponsor-address name amount]]}))
+    {:dispatch [:contract/sponsor-loaded [sponsor-address [name amount]]]}))
 
 (reg-event-db
   :contract/on-sponsorship-added
@@ -244,7 +244,7 @@
     {:db (-> db
            (update :top-sponsors-addresses conj sponsor-address)
            (update :top-sponsors-addresses set))
-     :dispatch [:contract/sponsor-loaded sponsor-address name amount]}))
+     :dispatch [:contract/sponsor-loaded sponsor-address [name amount]]}))
 
 (reg-event-db
   :contract/on-top-sponsor-removed
