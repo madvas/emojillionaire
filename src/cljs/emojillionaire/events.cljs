@@ -163,10 +163,14 @@
 (reg-event-fx
   :contract/get-settings
   interceptors
-  (fn [_ [result]]
+  (fn [{:keys [db]} [result]]
     (let [settings [:guess-cost :total-possibilities :guess-fee-ratio :guess-fee :max-guesses-at-once
-                    :sponsor-name-max-length :sponsorship-fee-ratio :sponsorship-min-amount :oraclize-fee]]
-      {:dispatch [:contract/on-settings-change (zipmap settings result)]})))
+                    :sponsor-name-max-length :sponsorship-fee-ratio :sponsorship-min-amount :oraclize-fee]
+          settings-map (zipmap settings result)]
+
+      (if (.eq (:total-possibilities settings-map) 0)
+        {:db (open-snackbar db "Looks like I can't reach contract. Are you on Morden Testnet?" :astonished)}
+        {:dispatch [:contract/on-settings-change (zipmap settings result)]}))))
 
 (reg-event-db
   :contract/on-settings-change
