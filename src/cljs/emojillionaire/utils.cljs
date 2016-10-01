@@ -127,8 +127,8 @@
            oraclize-fee)))
 
 (defn calculate-bet-cost [contract betsCount]
-  (let [bet-value (wu/contract-call contract :guess-cost)
-        house-fee (wu/contract-call contract :guess-fee)]
+  (let [bet-value (web3-eth/contract-call contract :guess-cost)
+        house-fee (web3-eth/contract-call contract :guess-fee)]
     (.plus (.times (.plus bet-value house-fee) betsCount)
            (web3/to-big-number (web3/to-wei 0.005 :ether)))))
 
