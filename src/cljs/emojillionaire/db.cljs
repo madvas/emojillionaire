@@ -1,16 +1,15 @@
 (ns emojillionaire.db
   (:require
+    [cljs-web3.core :as web3]
     [cljs.spec :as s]
     [cljsjs.bignumber]
-    [emojillionaire.emojis :refer [emojis]]
-    [web3-cljs.core :as wb]
-    ))
+    [emojillionaire.emojis :refer [emojis]]))
 
 (def default-db
   {:web3 (or (aget js/window "web3")
              (if goog.DEBUG
-               (wb/create-web3 "http://localhost:8545/")
-               (wb/create-web3 "https://morden.infura.io/metamask"))) ; Let's borrow this ;) Thanks MetaMask guys!
+               (web3/create-web3 "http://localhost:8545/")
+               (web3/create-web3 "https://morden.infura.io/metamask"))) ; Let's borrow this ;) Thanks MetaMask guys!
    :provides-web3? (or (aget js/window "web3") goog.DEBUG)
    :drawer-open? false
    :snackbar {:open? false
@@ -30,10 +29,10 @@
               :instance nil
               :address "0x01e29a1db0f4a7b522a93458e002392a7c49e8ce" ; testnet
               }
-   :dev-accounts {:privnet [["0x97f755acF6e7C4daA064BEF5c6740C12d56843Ce" "matusles"]
-                            ["0x7c7c3E38779E2407aD4daF1fe339635cccF34E87" "m"]
-                            ["0x8F8C79b5dDdEb431682104423271AAa8fe06457e" "m"]
-                            ["0x760807EA2E82cd97958c1a498774711e909b9CF3" "m"]]}
+   :dev-accounts {:privnet [["0x6fce64667819c82a8bcbb78e294d7b444d2e1a29" "m"]
+                            ["0xe206f52728e2c1e23de7d42d233f39ac2e748977" "m"]
+                            ["0x522f9c6b122f4ca8067eb5459c10d03a35798ed9" "m"]
+                            ["0xc5aa141d3822c3368df69bfd93ef2b13d1c59aec" "m"]]}
    :blockchain {}
    :gas-limits {:bet 650000
                 :sponsor 500000

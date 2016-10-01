@@ -5,12 +5,11 @@
     [cljs-time.coerce :refer [to-date-time to-long to-local-date-time]]
     [cljs-time.core :refer [date-time to-default-time-zone]]
     [cljs-time.format :as time-format]
+    [cljs-web3.core :as web3]
+    [cljs-web3.eth :as web3-eth]
+    [emojillionaire.routes :refer [routes]]
     [goog.string :as gstring]
     [goog.string.format]
-    [emojillionaire.routes :refer [routes]]
-    [web3-cljs.core :as wb]
-    [web3-cljs.eth :as we]
-    [web3-cljs.utils :as wu]
     [medley.core :as medley]))
 
 (def path-for (partial bidi/path-for routes))
@@ -50,10 +49,10 @@
      (/ (Math/round (* d factor)) factor))))
 
 (defn eth [big-num]
-  (str (wb/from-wei big-num :ether) " ETH"))
+  (str (web3/from-wei big-num :ether) " ETH"))
 
 (defn usd [big-num conversion-rate]
-  (gstring/format "%s USD" (round2 (* (wb/from-wei big-num :ether) conversion-rate) 2)))
+  (gstring/format "%s USD" (round2 (* (web3/from-wei big-num :ether) conversion-rate) 2)))
 
 (defn extract-props [v]
   (let [p (nth v 0 nil)]
@@ -106,8 +105,8 @@
         :error-handler on-error}))
 
 (defn deploy-bin! [web3 abi bin from-addr gas on-send on-deploy & [on-error]]
-  (let [Contract (we/contract web3 abi)]
-    (web3-cljs.utils/js-apply
+  (let [Contract (web3-eth/contract web3 abi)]
+    (cljs-web3.utils/js-apply
       Contract
       "new"
       [{:from from-addr
@@ -117,7 +116,7 @@
          (if (and error on-error)
            (on-error error)
            (if-let [address (and res (aget res "address"))]
-             (on-deploy (we/contract-at web3 abi address))
+             (on-deploy (web3-eth/contract-at web3 abi address))
              (on-send res))))])))
 
 (defn estimated-bet-cost [{:keys [guess-cost guess-fee oraclize-fee]} guess-count]
@@ -131,7 +130,7 @@
   (let [bet-value (wu/contract-call contract :guess-cost)
         house-fee (wu/contract-call contract :guess-fee)]
     (.plus (.times (.plus bet-value house-fee) betsCount)
-           (wb/to-big-number (wb/to-wei 0.005 :ether)))))
+           (web3/to-big-number (web3/to-wei 0.005 :ether)))))
 
 (defn format-date [date]
   (time-format/unparse-local (time-format/formatters :rfc822) (to-default-time-zone (to-date-time date))))

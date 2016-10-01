@@ -1,8 +1,8 @@
 (ns emojillionaire.web3-fx
-  (:require [cljs.spec :as s]
-            [re-frame.core :refer [reg-fx dispatch console reg-event-db reg-event-fx]]
-            [web3-cljs.utils :as web3-utils]
-            [web3-cljs.eth :as web3-eth]))
+  (:require
+    [cljs-web3.eth :as web3-eth]
+    [cljs.spec :as s]
+    [re-frame.core :refer [reg-fx dispatch console reg-event-db reg-event-fx]]))
 
 (defn- blockchain-filter-opts? [x]
   (or (map? x) (string? x) (nil? x)))
@@ -82,7 +82,7 @@
 
 (defn- event-stop-watching! [db db-path event-id]
   (when-let [event-filter (get-in db (conj db-path event-id))]
-    (web3-eth/stop-watching! event-filter (fn [] ))))
+    (web3-eth/stop-watching! event-filter (fn []))))
 
 (reg-fx
   :web3-fx.contract/events
@@ -99,7 +99,7 @@
               (reduce (fn [acc {:keys [event-id event-name on-success on-error
                                        event-filter-opts blockchain-filter-opts]}]
                         (event-stop-watching! db db-path event-id)
-                        (assoc acc event-id (web3-utils/contract-call
+                        (assoc acc event-id (web3-eth/contract-call
                                               instance
                                               event-name
                                               event-filter-opts
@@ -126,14 +126,14 @@
       (when (= :cljs.spec/invalid params)
         (console :error (s/explain-str ::contract-constant-fns raw-params)))
       (doseq [{:keys [f args on-success on-error]} fns]
-        (apply web3-utils/contract-call (concat [instance f]
-                                                args
-                                                [(dispach-fn on-success on-error)]))))))
+        (apply web3-eth/contract-call (concat [instance f]
+                                              args
+                                              [(dispach-fn on-success on-error)]))))))
 
 
 (defn- remove-blockchain-filter! [db filter-db-path]
   (when-let [blockchain-filter (get-in db filter-db-path)]
-    (web3-eth/stop-watching! blockchain-filter (fn [] )))
+    (web3-eth/stop-watching! blockchain-filter (fn [])))
   (assoc-in db filter-db-path nil))
 
 (reg-event-db
@@ -195,7 +195,7 @@
       (when (= :cljs.spec/invalid params)
         (console :error (s/explain-str ::contract-state-fn raw-params)))
       (let [{:keys [f args transaction-opts on-success on-error on-transaction-receipt]} (:fn params)]
-        (apply web3-utils/contract-call
+        (apply web3-eth/contract-call
                (concat [instance f]
                        args
                        [transaction-opts]
@@ -219,7 +219,7 @@
                                      addresses))]
 
       (when-let [blockchain-filter (get-in db filter-db-path)]
-        (web3-eth/stop-watching! blockchain-filter (fn [] )))
+        (web3-eth/stop-watching! blockchain-filter (fn [])))
 
       (let [blockchain-filter
             (web3-eth/filter

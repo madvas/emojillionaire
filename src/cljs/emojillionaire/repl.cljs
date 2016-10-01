@@ -1,49 +1,54 @@
 (ns ^:figwheel-no-load emojillionaire.repl
-  (:require [web3-cljs.core :as wb]
-            [web3-cljs.utils :as wu]
-            [web3-cljs.eth :as we]
-            [ajax.core :refer [GET]]
-            [medley.core :as medley]))
+  (:require [ajax.core :refer [GET]]
+            [cljs-web3.eth :as web3-eth]
+            [medley.core :as medley]
+            [cljs-web3.core :as web3]))
 
 
 (comment
   (print.foo/look (:instance (:contract @re-frame.db/app-db)))
 
-  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :state)
-  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :player-keys)
-  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :players "0x7c7c3e38779e2407ad4daf1fe339635cccf34e87")
-  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :players-count)
-  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :jackpots)
-  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :get-bet 1 #(println %2))
-  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :bets-count)
-  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :get-bet)
-  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :sponsors 0 #(println %2))
-  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :sponsor-keys)
-  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :sponsorships 2)
-  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :sponsors-count)
-  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :top-sponsors-addresses)
-  (web3-cljs.core/from-wei (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :get-oraclize-fee)
+  (cljs-web3.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :state)
+  (cljs-web3.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :player-keys)
+  (cljs-web3.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :players "0x7c7c3e38779e2407ad4daf1fe339635cccf34e87")
+  (cljs-web3.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :players-count)
+  (cljs-web3.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :jackpots)
+  (cljs-web3.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :get-bet 1 #(println %2))
+  (cljs-web3.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :bets-count)
+  (cljs-web3.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :get-bet)
+  (cljs-web3.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :sponsors 0 #(println %2))
+  (cljs-web3.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :sponsor-keys)
+  (cljs-web3.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :sponsorships 2)
+  (cljs-web3.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :sponsors-count)
+  (cljs-web3.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :top-sponsors-addresses)
+  (cljs-web3.core/from-wei (cljs-web3.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :get-oraclize-fee)
                            :ether)
+
+  (cljs-web3.eth/coinbase (:web3 @re-frame.db/app-db))
+  (cljs-web3.eth/get-balance (:web3 @re-frame.db/app-db)
+                             (first (cljs-web3.eth/accounts (:web3 @re-frame.db/app-db)))
+                             nil
+                             #(println %&))
 
   (.toNumber (-> @re-frame.db/app-db :contract :instance :config :oraclize-fee))
   (-> @re-frame.db/app-db :selectable-emojis)
 
-  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db))
+  (cljs-web3.utils/contract-call (:instance (:contract @re-frame.db/app-db))
                                  :on-log-int {} {:from-block 0 :to-block "latest"} (fn [& args]
                                                                                      (println "on-log-int")
                                                                                      (print.foo/look args)))
 
-  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db))
+  (cljs-web3.utils/contract-call (:instance (:contract @re-frame.db/app-db))
                                  :on-log-int-arr {} {:from-block 0 :to-block "latest"} (fn [& args]
                                                                                          (println "on-log-int-arr")
                                                                                          (print.foo/look args)))
 
-  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db))
+  (cljs-web3.utils/contract-call (:instance (:contract @re-frame.db/app-db))
                                  :on-rolled {} {:from-block 0 :to-block "latest"} (fn [& args]
                                                                                     (println "on-rolled")
                                                                                     (print.foo/look args)))
 
-  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db))
+  (cljs-web3.utils/contract-call (:instance (:contract @re-frame.db/app-db))
                                  :on-sponsor-updated
                                  {}
                                  {:from-block 0 :to-block "latest"}
@@ -51,42 +56,42 @@
                                    (println "on-sponsor-updated")
                                    (print.foo/look args)))
 
-  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db))
+  (cljs-web3.utils/contract-call (:instance (:contract @re-frame.db/app-db))
                                  :on-bet {:from-block 0 :to-block "latest"} (fn [& args]
                                                                               (println "on-bet")
                                                                               (print.foo/look args)))
 
-  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db))
+  (cljs-web3.utils/contract-call (:instance (:contract @re-frame.db/app-db))
                                  :bet [1] {:from (:address (:new-bet @re-frame.db/app-db))
                                            :value 200000000000000000
                                            :gas 4712388}
                                  #(print.foo/look %&))
 
-  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db))
+  (cljs-web3.utils/contract-call (:instance (:contract @re-frame.db/app-db))
                                  :sponsor "aaaa" {:from (first (:my-addresses @re-frame.db/app-db))
                                                   :value 2000000000000000000
                                                   :gas 4712388}
                                  #(print.foo/look %&))
 
-  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db))
+  (cljs-web3.utils/contract-call (:instance (:contract @re-frame.db/app-db))
                                  :refund-everyone {:from (first (:my-addresses @re-frame.db/app-db))
                                                    :gas 4712388}
                                  #(print.foo/look %&))
 
-  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db))
+  (cljs-web3.utils/contract-call (:instance (:contract @re-frame.db/app-db))
                                  :change-settings
-                                 (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :guess-cost)
-                                 (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :total-possibilities)
-                                 (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :guess-fee-ratio)
+                                 (cljs-web3.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :guess-cost)
+                                 (cljs-web3.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :total-possibilities)
+                                 (cljs-web3.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :guess-fee-ratio)
                                  25                         ; max-guesses-at-once
                                  30                         ; sponsor-name-max-length
                                  500                        ; sponsorship-fee-ratio
-                                 (web3-cljs.core/to-wei 1 :ether) ; sponsorship-min-amount
+                                 (cljs-web3.core/to-wei 1 :ether) ; sponsorship-min-amount
                                  {:from (first (:my-addresses @re-frame.db/app-db))
                                   :gas 4712388}
                                  #(print.foo/look %&))
 
-  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db))
+  (cljs-web3.utils/contract-call (:instance (:contract @re-frame.db/app-db))
                                  :bet
                                  (range 1 21)
                                  {:from (second (:my-addresses @re-frame.db/app-db))
@@ -96,19 +101,19 @@
                                            20)}
                                  #(print.foo/look %&))
 
-  (web3-cljs.eth/get-transaction-receipt (:web3 @re-frame.db/app-db) "0xf7887c3599b7aac7f20598f0a6915e6959ee29edf107ef486e76e2c8aad71402" #(print.foo/look %&))
-  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :max-guesses-at-once)
-  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :top-sponsors-max-length #(print.foo/look (.toNumber %2)))
-  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :top-sponsors-addresses 1 #(print.foo/look %2))
-  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db))
+  (cljs-web3.eth/get-transaction-receipt (:web3 @re-frame.db/app-db) "0xf7887c3599b7aac7f20598f0a6915e6959ee29edf107ef486e76e2c8aad71402" #(print.foo/look %&))
+  (cljs-web3.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :max-guesses-at-once)
+  (cljs-web3.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :top-sponsors-max-length #(print.foo/look (.toNumber %2)))
+  (cljs-web3.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :top-sponsors-addresses 1 #(print.foo/look %2))
+  (cljs-web3.utils/contract-call (:instance (:contract @re-frame.db/app-db))
                                  :set-top-sponsors-max-length
                                  10
                                  {:from (first (:my-addresses @re-frame.db/app-db))
                                   :gas 4712388}
                                  #(print.foo/look %&))
 
-  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :oraclize-gas-limit)
-  (web3-cljs.utils/contract-call (:instance (:contract @re-frame.db/app-db))
+  (cljs-web3.utils/contract-call (:instance (:contract @re-frame.db/app-db)) :oraclize-gas-limit)
+  (cljs-web3.utils/contract-call (:instance (:contract @re-frame.db/app-db))
                                  :set-oraclize-gas-limit
                                  700000
                                  {:from (first (:my-addresses @re-frame.db/app-db))
@@ -118,19 +123,19 @@
   (emojillionaire.utils/fetch-contract! "/contracts/build/emojillionaire"
                                         "Emojillionaire"
                                         (fn [abi bin]
-                                          (println (web3-cljs.eth/estimate-gas (:web3 @re-frame.db/app-db)
+                                          (println (cljs-web3.eth/estimate-gas (:web3 @re-frame.db/app-db)
                                                                                {:data bin}))))
 
   (emojillionaire.utils/fetch-contract! "/contracts/build/emojillionaire"
                                         "EmojillionaireUtils"
                                         (fn [abi bin]
-                                          (println (web3-cljs.eth/estimate-gas (:web3 @re-frame.db/app-db)
+                                          (println (cljs-web3.eth/estimate-gas (:web3 @re-frame.db/app-db)
                                                                                {:data bin}))))
 
   (emojillionaire.utils/fetch-contract! "/contracts/build/emojillionaire"
                                         "EmojillionaireDb"
                                         (fn [abi bin]
-                                          (println (web3-cljs.eth/estimate-gas (:web3 @re-frame.db/app-db)
+                                          (println (cljs-web3.eth/estimate-gas (:web3 @re-frame.db/app-db)
                                                                                {:data bin}))))
 
 
@@ -154,7 +159,7 @@
 ;(def web3 (wb/create-web3 "https://madvas.by.ether.camp:8555/sandbox/4c9d460cfe"))
 #_(.log js/console js/web3)
 
-#_(def w3 (wb/create-web3 "http://localhost:8545/"))
+#_(def w3 (web3/create-web3 "http://localhost:8545/"))
 #_(.-eth js/web3)
 (def w3 js/web3)
 
@@ -173,7 +178,7 @@
 (def devnet-metamask "0xf46a340b45ce87C557c622Bd99Ac340Ae0e0A2d3")
 (def devnet-mist "0x7c7c3E38779E2407aD4daF1fe339635cccF34E87")
 
-#_(we/set-default-account! w3 my-address)
+#_(web3-eth/set-default-account! w3 my-address)
 
 (def print-clb (fn [err res]
                  (println err)
@@ -183,7 +188,7 @@
   (if (and x (aget x "toNumber"))
     (let [num (.toNumber x)]
       (if (> num 1000000)
-        (str (wb/from-wei (.toNumber x) :ether) " eth")
+        (str (web3/from-wei (.toNumber x) :ether) " eth")
         num))
     x))
 
@@ -200,14 +205,14 @@
                    (.log js/console res)))
 
 (defn accounts-balances [web3 clb]
-  (map #(we/get-balance web3 % (fn [err res]
-                                 (clb err (big-number->ether res))))
-       (we/accounts web3)))
+  (map #(web3-eth/get-balance web3 % (fn [err res]
+                                       (clb err (big-number->ether res))))
+       (web3-eth/accounts web3)))
 
 (defn deploy-bin! [web3 abi bin & [from-addr]]
-  (println "here " (we/accounts web3))
-  (let [Contract (we/contract web3 abi)]
-    (.new Contract #js {:from (or from-addr (last (we/accounts web3)))
+  (println "here " (web3-eth/accounts web3))
+  (let [Contract (web3-eth/contract web3 abi)]
+    (.new Contract #js {:from (or from-addr (last (web3-eth/accounts web3)))
                         :data bin
                         :gas 2100000}
           (fn [err res]
@@ -218,7 +223,7 @@
               (do
                 (println "Deployed contract at " address)
                 (reset! *contract-address* address)
-                (reset! *contract-instance* (we/contract-at web3 abi address)))
+                (reset! *contract-instance* (web3-eth/contract-at web3 abi address)))
               (println "Sent contract"))))))
 
 (defn fetch-contract!
@@ -244,7 +249,7 @@
                         (println (:event log) (big-numbers->ether (:args log)))))))
 
 (defn get-jackpot []
-  (wb/from-wei (.toNumber (wu/contract-call @*contract-instance* "jackpot")) :ether))
+  (web3/from-wei (.toNumber (wu/contract-call @*contract-instance* "jackpot")) :ether))
 
 (defn get-eth-prop [prop-name]
   (big-number->ether (wu/contract-call @*contract-instance* prop-name)))
@@ -253,25 +258,25 @@
   (fetch-contract! "emojillionaire" #(deploy-bin! w3 %1 %2)))
 
 (comment
-  (wb/version-api w3)
+  (web3/version-api w3)
   (.-eth w3)
   (.log js/console (Object.keys (aget w3 "personal")))
-  (wb/connected? w3)
+  (web3/connected? w3)
 
   (.clear js/console)
   (wp/unlock-account w3 devnet-miner "matusles", print-clb)
   (fetch-contract! "emojillionaire")
 
   (deploy-bin! w3 @*contract-abi* @*contract-bin*)
-  (we/accounts w3)
+  (web3-eth/accounts w3)
   (accounts-balances w3 print-clb)
-  (we/get-balance w3 devnet-miner balance-clb)
+  (web3-eth/get-balance w3 devnet-miner balance-clb)
 
   (contract-call @*contract-instance* "numBets")
   (contract-call @*contract-instance* "isValidBetInput" 5)
   (deploy-contract!)
   (contract-call @*contract-instance* "getRandomOrgQuery" 9)
-  (big-number->ether (contract-call @*contract-instance* "playerCredit" (first (we/accounts w3))))
+  (big-number->ether (contract-call @*contract-instance* "playerCredit" (first (web3-eth/accounts w3))))
   (big-number->ether (contract-call @*contract-instance* "betValue"))
 
   (get-jackpot)
@@ -285,22 +290,22 @@
     (listen-contract-event "onRolled")
     (listen-contract-event "onRuntimeError"))
 
-  (.log js/console (we/contract-at w3 @*contract-abi* @*contract-address*))
+  (.log js/console (web3-eth/contract-at w3 @*contract-abi* @*contract-address*))
   (.log js/console @*contract-instance*)
   (contract-call @*contract-instance* "bet" 106 {:gas 4712388
                                                  ;:value (wb/to-wei w3 200 :finney)
                                                  :value (.plus (contract-call @*contract-instance* "betValue")
-                                                               (wb/to-big-number w3 (wb/to-wei 0.005 :ether)))
-                                                 :from (last (we/accounts w3))} print-clb)
+                                                               (web3/to-big-number w3 (web3/to-wei 0.005 :ether)))
+                                                 :from (last (web3-eth/accounts w3))} print-clb)
 
   (contract-call @*contract-instance* "logTest" {:gas 300000
-                                                 :from (last (we/accounts w3))} print-clb)
+                                                 :from (last (web3-eth/accounts w3))} print-clb)
 
   (.getData (.-bet @*contract-instance*) 5)
   (.getData (.-withdraw @*contract-instance*))
 
   (contract-call @*contract-instance* "withdraw" {:gas 500000
-                                                  :from (last (we/accounts w3))} print-clb)
+                                                  :from (last (web3-eth/accounts w3))} print-clb)
 
 
 
@@ -310,10 +315,10 @@
   (contract-call @*contract-instance* "betsKeys")
   (contract-call @*contract-instance* "bets" (contract-call @*contract-instance* "betsKeys" 0))
 
-  (big-number->ether (we/get-balance w3 @*contract-address*))
-  (big-number->ether (we/get-balance w3 my-address))
+  (big-number->ether (web3-eth/get-balance w3 @*contract-address*))
+  (big-number->ether (web3-eth/get-balance w3 my-address))
 
-  (def my-filter (we/filter w3 "pending"))
+  (def my-filter (web3-eth/filter w3 "pending"))
   (.watch my-filter (fn [err log]
                       (println "my-filter watch")
                       (println err log)))
@@ -326,7 +331,7 @@
 
   (.stopWatching my-filter)
 
-  (reset! *contract-instance* (we/contract-at w3 @*contract-abi* @*contract-address*))
+  (reset! *contract-instance* (web3-eth/contract-at w3 @*contract-abi* @*contract-address*))
 
   (let [events (contract-call @*contract-instance* "allEvents" {} (fn [err log]
                                                                     (println "Contract Event!")
@@ -347,21 +352,21 @@
                                                               (println "OMG IT WORKS")
                                                               (println err)
                                                               (println res)))
-  #_(let [ContrInstance (we/contract-at w3 (code->abi w3 src1) @*contract-address*)]
+  #_(let [ContrInstance (web3-eth/contract-at w3 (code->abi w3 src1) @*contract-address*)]
       (.multiply ContrInstance 5 #js{:gas 300000
                                      :value 100}))
 
   (.log js/console w3)
-  (wb/connected? w3)
-  (we/block-number w3 print-clb)
-  (we/accounts w3 print-clb)
-  (we/get-balance w3 my-address print-clb)
+  (web3/connected? w3)
+  (web3-eth/block-number w3 print-clb)
+  (web3-eth/accounts w3 print-clb)
+  (web3-eth/get-balance w3 my-address print-clb)
   (accounts-balances w3 console-clb)
-  (we/get-storage-at w3 @*contract-address*)
-  (we/get-code w3 @*contract-address*)
-  (we/get-code w3 my-address)
+  (web3-eth/get-storage-at w3 @*contract-address*)
+  (web3-eth/get-code w3 @*contract-address*)
+  (web3-eth/get-code w3 my-address)
 
-  (def Emojillionaire (we/contract-at w3 contract-abi contract-address))
+  (def Emojillionaire (web3-eth/contract-at w3 contract-abi contract-address))
   (.onSomeMethod Emojillionaire (fn [err res]
                                   (println "onSomeMethod!!")))
   (.someMethod Emojillionaire #js {"value" 10 "gas" 2000})
@@ -369,78 +374,78 @@
 
 
   (.log js/console w3)
-  (wb/version-api w3)
-  (wb/version-network w3 print-clb)
-  (wb/version-ethereum w3 print-clb)
-  (wb/version-node w3 print-clb)
-  (wb/version-whisper w3 print-clb)
-  (wb/connected? w3)
-  (.log js/console (wb/current-provider w3))
-  (wb/sha3 (wb/sha3 "Some string to be hashed"))
-  (wb/to-ascii "0x657468657265756d")
-  (wb/from-ascii "ethereum" 32)
-  (wb/to-decimal "0x15")
-  (wb/from-wei 21000000000000 :finney)
-  (wb/to-wei 0.5 :ether)
-  (wb/to-big-number "200000000000000000000001")
-  (wb/address? my-address)
+  (web3/version-api w3)
+  (web3/version-network w3 print-clb)
+  (web3/version-ethereum w3 print-clb)
+  (web3/version-node w3 print-clb)
+  (web3/version-whisper w3 print-clb)
+  (web3/connected? w3)
+  (.log js/console (web3/current-provider w3))
+  (web3/sha3 (web3/sha3 "Some string to be hashed"))
+  (web3/to-ascii "0x657468657265756d")
+  (web3/from-ascii "ethereum" 32)
+  (web3/to-decimal "0x15")
+  (web3/from-wei 21000000000000 :finney)
+  (web3/to-wei 0.5 :ether)
+  (web3/to-big-number "200000000000000000000001")
+  (web3/address? my-address)
   (wn/listening? w3)
   (wn/listening? w3 print-clb)
   (wn/peer-count w3)
   (wn/peer-count w3 print-clb)
-  (we/default-account w3)
-  (we/set-default-account! w3 my-address)
-  (we/default-block w3)
-  (we/syncing w3)
-  (we/syncing w3 print-clb)
-  (we/syncing? w3 print-clb)
-  (we/coinbase w3 print-clb)
-  (we/coinbase w3)
-  (we/mining? w3 print-clb)
-  (we/hashrate w3 print-clb)
-  (big-number->ether (we/gas-price w3))
-  (we/block-number w3 print-clb)
-  (we/accounts w3 print-clb)
-  (we/get-balance w3 my-address "latest" print-clb)
-  (big-number->ether (we/get-balance w3 my-address))
-  (wb/from-wei (.toNumber (we/get-balance w3 my-address)) :ether)
-  (we/get-block w3 (we/block-number w3) true print-clb)
-  (we/get-block w3 (we/block-number w3))
-  (we/get-block-transaction-count w3 (we/block-number w3) print-clb)
-  (we/get-uncle w3 (we/block-number w3) 0)
-  (we/get-transaction-from-block w3 "pending" 0 print-clb)
-  (we/get-transaction-count w3 my-address)
-  (we/get-transaction w3 tx-address)
-  (we/block-number w3 print-clb)
-  (we/get-transaction-receipt w3 tx-address)
+  (web3-eth/default-account w3)
+  (web3-eth/set-default-account! w3 my-address)
+  (web3-eth/default-block w3)
+  (web3-eth/syncing w3)
+  (web3-eth/syncing w3 print-clb)
+  (web3-eth/syncing? w3 print-clb)
+  (web3-eth/coinbase w3 print-clb)
+  (web3-eth/coinbase w3)
+  (web3-eth/mining? w3 print-clb)
+  (web3-eth/hashrate w3 print-clb)
+  (big-number->ether (web3-eth/gas-price w3))
+  (web3-eth/block-number w3 print-clb)
+  (web3-eth/accounts w3 print-clb)
+  (web3-eth/get-balance w3 my-address "latest" print-clb)
+  (big-number->ether (web3-eth/get-balance w3 my-address))
+  (web3/from-wei (.toNumber (web3-eth/get-balance w3 my-address)) :ether)
+  (web3-eth/get-block w3 (web3-eth/block-number w3) true print-clb)
+  (web3-eth/get-block w3 (web3-eth/block-number w3))
+  (web3-eth/get-block-transaction-count w3 (web3-eth/block-number w3) print-clb)
+  (web3-eth/get-uncle w3 (web3-eth/block-number w3) 0)
+  (web3-eth/get-transaction-from-block w3 "pending" 0 print-clb)
+  (web3-eth/get-transaction-count w3 my-address)
+  (web3-eth/get-transaction w3 tx-address)
+  (web3-eth/block-number w3 print-clb)
+  (web3-eth/get-transaction-receipt w3 tx-address)
   (let [code "0x603d80600c6000396000f3007c01000000000000000000000000000000000000000000000000000000006000350463c6888fa18114602d57005b6007600435028060005260206000f3"]
-    (we/send-transaction! w3 {:data code
-                              :from my-address} print-clb))
-  (we/sign w3 "0x135a7de83802408321b74c322f8558db1679ac20" "0x9dd2c369a187b4e6b9c402f030e50743e619301ea62aa4c0737d4ef7e10a3d49")
-  (we/call! w3 {:data "0xc6888fa10000000000000000000000000000000000000000000000000000000000000003"
-                :to my-address} print-clb)
+    (web3-eth/send-transaction! w3 {:data code
+                                    :from my-address} print-clb))
+  (web3-eth/sign w3 "0x135a7de83802408321b74c322f8558db1679ac20" "0x9dd2c369a187b4e6b9c402f030e50743e619301ea62aa4c0737d4ef7e10a3d49")
+  (web3-eth/call! w3 {:data "0xc6888fa10000000000000000000000000000000000000000000000000000000000000003"
+                      :to my-address} print-clb)
 
-  (we/estimate-gas w3
-                   {:to my-address
-                    :data "0xc6888fa10000000000000000000000000000000000000000000000000000000000000003"}
-                   print-clb)
+  (web3-eth/estimate-gas w3
+                         {:to my-address
+                          :data "0xc6888fa10000000000000000000000000000000000000000000000000000000000000003"}
+                         print-clb)
 
-  (def fltr (we/filter w3 "latest"))
+  (def fltr (web3-eth/filter w3 "latest"))
   (.get fltr print-clb)
   (.watch fltr (fn [& args]
                  (println "Watching " args)))
   (.stopWatching fltr)
 
-  (def my-contract (we/contract w3 some-abi))
+  (def my-contract (web3-eth/contract w3 some-abi))
   (def my-contr-inst (.at my-contract "0xc4abd0339eb8d57087278718986382264244252f"))
   (.myConstantMethod my-contr-inst "myParam")
   (.myStateChangingMethod my-contr-inst "someParam1" 23 (clj->js {:value 200 :gas 2000}))
   (.myEvent my-contr-inst #js {"a" 5} print-clb)
 
-  (we/get-compilers w3)
-  (we/compile-solidity w3 src1)
+  (web3-eth/get-compilers w3)
+  (web3-eth/compile-solidity w3 src1)
 
-  (we/namereg w3)
+  (web3-eth/namereg w3)
 
   (wd/put-string! w3 "myDB" "abc" "def")
   (wd/get-string w3 "myDB" "abc")

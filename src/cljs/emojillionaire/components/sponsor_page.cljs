@@ -2,13 +2,12 @@
   (:require
     [cljs-react-material-ui.icons :as icons]
     [cljs-react-material-ui.reagent :as ui]
+    [cljs-web3.core :as web3]
     [emojillionaire.components.address-select-field :refer [address-select-field]]
     [emojillionaire.components.emoji :refer [emoji]]
     [emojillionaire.components.layout :refer [grid row col outer-paper headline]]
     [emojillionaire.utils :as u]
-    [re-frame.core :refer [subscribe dispatch]]
-    [web3-cljs.core :as web3-cljs]
-    ))
+    [re-frame.core :refer [subscribe dispatch]]))
 
 (defn sponsor-page []
   (let [new-sponsor (subscribe [:db/new-sponsor])
@@ -20,7 +19,7 @@
       (let [{:keys [name amount address sending?]} @new-sponsor
             {:keys [sponsor-name-max-length sponsorship-fee-ratio sponsorship-min-amount]} @contract-config
             sponsor-fee-percent (divide sponsorship-fee-ratio 100)
-            min-amount (web3-cljs/from-wei sponsorship-min-amount :ether)]
+            min-amount (web3/from-wei sponsorship-min-amount :ether)]
         [outer-paper
          [headline "Become a Sponsor" :medal]
          [:br]

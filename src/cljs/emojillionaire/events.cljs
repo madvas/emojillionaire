@@ -2,6 +2,9 @@
   (:require
     [ajax.core :as ajax]
     [camel-snake-kebab.core :as cs :include-macros true]
+    [cljs-web3.core :as web3]
+    [cljs-web3.eth :as web3-eth]
+    [cljs-web3.personal :as web3-personal]
     [cljs.spec :as s]
     [day8.re-frame.http-fx]
     [emojillionaire.components.emoji :refer [emoji]]
@@ -12,11 +15,7 @@
     [emojillionaire.web3-fx]
     [goog.string :as gstring]
     [goog.string.format]
-    [re-frame.core :refer [reg-event-db reg-event-fx path trim-v after debug reg-fx console dispatch]]
-    [web3-cljs.core :as web3-cljs]
-    [web3-cljs.eth :as web3-eth]
-    [web3-cljs.personal :as web3-personal]
-    [cljs-react-material-ui.reagent :as ui]))
+    [re-frame.core :refer [reg-event-db reg-event-fx path trim-v after debug reg-fx console dispatch]]))
 
 (defn check-and-throw
   "throw an exception if db doesn't match the spec."
@@ -612,7 +611,7 @@
              name
              {:gas gas-limit
               :from address
-              :value (web3-cljs/to-wei amount :ether)}
+              :value (web3/to-wei amount :ether)}
              :contract/sponsor-response
              :contract/sponsor-error
              [:blockchain/transaction-receipt-loaded gas-limit
