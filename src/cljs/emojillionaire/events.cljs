@@ -12,9 +12,9 @@
     [emojillionaire.db :refer [default-db]]
     [emojillionaire.ga-fx]
     [emojillionaire.utils :as u]
-    [emojillionaire.web3-fx]
     [goog.string :as gstring]
     [goog.string.format]
+    [madvas.re-frame.web3-fx]
     [re-frame.core :refer [reg-event-db reg-event-fx path trim-v after debug reg-fx console dispatch]]))
 
 (defn check-and-throw
@@ -458,10 +458,9 @@
                (assoc-in [:new-sponsor :address] (first addresses))
                (update :accounts merge addresses-map))
          :web3-fx.blockchain/balances
-         {:db db
+         {:web3 (:web3 db)
           :watch? true
           :blockchain-filter-opts "latest"
-          :web3 (:web3 db)
           :db-path [:blockchain :balances]
           :addresses addresses
           :dispatches [:blockchain/balance-loaded :blockchain/on-error]}}
