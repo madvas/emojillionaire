@@ -10,10 +10,10 @@
     [emojillionaire.components.emoji :refer [emoji]]
     [emojillionaire.components.layout :refer [row]]
     [emojillionaire.db :refer [default-db]]
-    [emojillionaire.ga-fx]
     [emojillionaire.utils :as u]
     [goog.string :as gstring]
     [goog.string.format]
+    [madvas.re-frame.google-analytics-fx]
     [madvas.re-frame.web3-fx]
     [re-frame.core :refer [reg-event-db reg-event-fx path trim-v after debug reg-fx console dispatch]]))
 
@@ -744,7 +744,7 @@
   (fn [{:keys [db]} [match]]
     {:db (assoc db :current-page match
                    :drawer-open? false)
-     :ga/page-view (apply u/path-for (:handler match) (flatten (into [] (:route-params match))))}))
+     :ga/page-view [(apply u/path-for (:handler match) (flatten (into [] (:route-params match))))]}))
 
 (reg-event-db
   :select-emoji

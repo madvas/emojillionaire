@@ -15,6 +15,7 @@
                  [environ "1.0.3"]
                  [http-kit "2.2.0"]
                  [kibu/pushy "0.3.6"]
+                 [madvas.re-frame/google-analytics-fx "0.1.0"]
                  [madvas.re-frame/web3-fx "0.1.0"]
                  [medley "0.8.3"]
                  [org.clojure/clojure "1.9.0-alpha10"]

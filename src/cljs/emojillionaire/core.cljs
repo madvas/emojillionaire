@@ -10,10 +10,10 @@
     [cljsjs.web3]
     [emojillionaire.components.main-panel :refer [main-panel]]
     [emojillionaire.events]
-    [emojillionaire.ga-fx :as ga-fx]
     [emojillionaire.routes :refer [routes]]
     [emojillionaire.subs]
     [goog.string.format]
+    [madvas.re-frame.google-analytics-fx :as google-analytics-fx]
     [print.foo :include-macros true]
     [pushy.core :as pushy]
     [re-frame.core :refer [dispatch dispatch-sync]]
@@ -27,7 +27,7 @@
 
 (defn mount-root []
   (s/check-asserts goog.DEBUG)
-  (ga-fx/set-enabled! (not goog.DEBUG))
+  (google-analytics-fx/set-enabled! true #_ (not goog.DEBUG))
   #_ (.clear js/console)
   (reagent/render [main-panel]
                   (.getElementById js/document "app")))
