@@ -45,6 +45,7 @@
 
 (defn main-panel []
   (let [drawer-open? (subscribe [:db/drawer-open?])
+        chat-open? (subscribe [:db/chat-open?])
         current-page (subscribe [:db/current-page])
         my-addresses (subscribe [:db/my-addresses])
         active-state? (subscribe [:contract/active-state?])
@@ -64,6 +65,12 @@
                      :on-left-icon-button-touch-tap #(dispatch [:drawer/toggle])
                      :icon-element-right (r/as-element
                                            [row {:middle "xs"}
+                                            [ui/raised-button
+                                             {:label "Chat"
+                                              :secondary true
+                                              :on-touch-tap #(dispatch [:chat/toggle])
+                                              :style {:margin-right "20px"
+                                                      :margin-top "-7px"}}]
                                             [:h2 {:style st/network-title} (case @network
                                                                              :testnet "Morden Testnet"
                                                                              :privnet "Private Net"
@@ -104,5 +111,14 @@
         [ui/snackbar (-> @snackbar
                        (set/rename-keys {:open? :open})
                        (update :message #(r/as-element %))
-                       (update :action #(if % (r/as-element %) nil)))]]
-       ])))
+                       (update :action #(if % (r/as-element %) nil)))]
+        [ui/paper {:id "tlkio"
+                   :data-channel "emojillionaire"
+                   :data-theme "theme--pop"
+                   :style {:width "400px"
+                           :height "400px"
+                           :position "fixed"
+                           :bottom 0
+                           :right "30px"
+                           :z-index 999
+                           :display (if @chat-open? "block" "none")}}]]])))

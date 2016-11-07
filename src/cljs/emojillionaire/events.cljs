@@ -733,6 +733,12 @@
     (update db :drawer-open? not)))
 
 (reg-event-db
+  :chat/toggle
+  interceptors
+  (fn [db _]
+    (update db :chat-open? not)))
+
+(reg-event-db
   :snackbar/close
   interceptors
   (fn [db _]

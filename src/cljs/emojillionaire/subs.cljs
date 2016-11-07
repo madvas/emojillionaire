@@ -11,6 +11,11 @@
     (:network db)))
 
 (reg-sub
+  :db/chat-open?
+  (fn [db _]
+    (:chat-open? db)))
+
+(reg-sub
   :db/drawer-open?
   (fn [db _]
     (:drawer-open? db)))

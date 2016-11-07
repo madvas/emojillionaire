@@ -12,6 +12,7 @@
                (web3/create-web3 "https://morden.infura.io/metamask"))) ; Let's borrow this ;) Thanks MetaMask guys!
    :provides-web3? (or (aget js/window "web3") goog.DEBUG)
    :drawer-open? false
+   :chat-open? false
    :snackbar {:open? false
               :message ""
               :auto-hide-duration 10000}
